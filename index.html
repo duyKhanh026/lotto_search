@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Phân tích Lotto</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+h1 {
+    color: white;
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 2.5em;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    letter-spacing: 1px;
+}
+
+h2 { 
+    margin-top: 35px; 
+    margin-bottom: 20px;
+    color: white;
+    font-size: 1.5em;
+    background: rgba(255,255,255,0.15);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid #ffd700;
+}
+
+.input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+input { 
+    padding: 12px 15px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1em;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    flex: 1;
+    min-width: 250px;
+    transition: all 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    box-shadow: 0 4px 12px rgba(255,215,0,0.3);
+    transform: translateY(-2px);
+}
+
+button { 
+    padding: 12px 30px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+    color: #333;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    font-size: 1em;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+.result-box { 
+    margin-top: 15px; 
+    font-weight: bold;
+    padding: 15px;
+    background: rgba(255,255,255,0.95);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    color: #667eea;
+    font-size: 1.1em;
+}
+
+.result-box.empty {
+    display: none;
+}
+
+table { 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    width: 100%;
+}
+
+th, td { 
+    border: 1px solid #e0e0e0;
+    padding: 12px 15px; 
+    text-align: center;
+    font-size: 0.95em;
+}
+
+th { 
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-weight: 600;
+}
+
+tr:hover {
+    background: #f8f9ff;
+    transition: background 0.2s ease;
+}
+
+tr:nth-child(even) {
+    background: #f5f7ff;
+}
+
+#result {
+    background: rgba(255,255,255,0.95);
+    border-radius: 8px;
+    padding: 25px;
+    margin-top: 30px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+@media (max-width: 768px) {
+    body { padding: 20px; }
+    h1 { font-size: 1.8em; }
+    .input-group { flex-direction: column; }
+    input { min-width: 100%; }
+    table { font-size: 0.85em; }
+    th, td { padding: 8px 10px; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>🎰 Phân tích kết quả Lotto</h1>
+
+<h2>🔍 Dò bộ số</h2>
+<div class="input-group">
+    <input type="text" id="checkInput" placeholder="Nhập 5 số ví dụ: 12 14 22 23 30">
+    <button onclick="checkSet()">Kiểm tra</button>
+</div>
+<div id="checkResult" class="result-box"></div>
+
+<div id="result"></div>
+</div>
+
+<script>
+
+let fullSetCount = {};
+let tripleCount = {};
+let numberFrequency = {};
+
+window.onload = function() {
+    fetch("lotto.txt")
+    .then(response => response.text())
+    .then(text => processData(text))
+    .catch(err => alert("Không đọc được file! Hãy chạy bằng http server."));
+};
+
+function processData(text) {
+
+    const lines = text.trim().split("\n");
+
+    lines.forEach(line => {
+
+        const parts = line.trim().split(" ");
+        if (parts.length < 3) return;
+
+        const numbersPart = parts[2];
+        const mainPart = numbersPart.split("|")[0];
+
+        let numbers = [];
+        for (let i = 0; i < mainPart.length; i += 2) {
+            numbers.push(mainPart.substr(i, 2));
+        }
+
+        numbers.sort();
+
+        const fullKey = numbers.join("-");
+        fullSetCount[fullKey] = (fullSetCount[fullKey] || 0) + 1;
+
+        numbers.forEach(num => {
+            numberFrequency[num] = (numberFrequency[num] || 0) + 1;
+        });
+
+        for (let i = 0; i < numbers.length; i++) {
+            for (let j = i + 1; j < numbers.length; j++) {
+                for (let k = j + 1; k < numbers.length; k++) {
+
+                    const triple = [numbers[i], numbers[j], numbers[k]].join("-");
+                    tripleCount[triple] = (tripleCount[triple] || 0) + 1;
+
+                }
+            }
+        }
+
+    });
+
+    displayResults();
+}
+
+function displayResults() {
+
+    let html = "";
+
+    // ===== Bộ 5 số trùng >1 =====
+    const filteredFull = Object.fromEntries(
+        Object.entries(fullSetCount)
+        .filter(([k,v]) => v > 1)
+        .sort((a,b) => b[1]-a[1])
+    );
+
+    html += "<h2>Bộ 5 số xuất hiện nhiều hơn 1 lần</h2>";
+    html += createTable(filteredFull);
+
+    // ===== Bộ 3 >1 =====
+    const filteredTriple = Object.fromEntries(
+        Object.entries(tripleCount)
+        .filter(([k,v]) => v > 1)
+        .sort((a,b) => b[1]-a[1])
+        .slice(0,50)
+    );
+
+    html += "<h2>Top bộ 3 xuất hiện >1 lần</h2>";
+    html += createTable(filteredTriple);
+
+    // ===== Tần suất số =====
+    html += "<h2>Tần suất từng số</h2>";
+    html += createTable(
+        Object.fromEntries(
+            Object.entries(numberFrequency)
+            .sort((a,b) => b[1]-a[1])
+        )
+    );
+
+    document.getElementById("result").innerHTML = html;
+}
+
+function createTable(dataObj) {
+
+    if (Object.keys(dataObj).length === 0)
+        return "<p>Không có dữ liệu</p>";
+
+    let html = "<table><tr><th>Bộ số</th><th>Số lần</th></tr>";
+
+    for (const key in dataObj) {
+        html += `<tr><td>${key}</td><td>${dataObj[key]}</td></tr>`;
+    }
+
+    html += "</table>";
+    return html;
+}
+
+function checkSet() {
+
+    const input = document.getElementById("checkInput").value.trim();
+    if (!input) return;
+
+    let numbers = input.split(/\s+/);
+
+    if (numbers.length !== 5) {
+        document.getElementById("checkResult").innerText = "Phải nhập đúng 5 số!";
+        return;
+    }
+
+    numbers = numbers.map(n => n.padStart(2,'0')).sort();
+    const key = numbers.join("-");
+
+    const count = fullSetCount[key] || 0;
+
+    if (count > 0)
+        document.getElementById("checkResult").innerText =
+            `Bộ ${key} đã xuất hiện ${count} lần`;
+    else
+        document.getElementById("checkResult").innerText =
+            `Bộ ${key} chưa từng xuất hiện`;
+}
+
+</script>
+
+</body>
+</html>
