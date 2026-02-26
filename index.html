@@ -209,6 +209,11 @@ function displayResults() {
 
     let html = "";
 
+    // Display recent results from last 5 days
+    const recentDates = getUniqueDates(drawHistory).slice(0, 5);
+    html += "<h2 class='result-heading'>📅 Kết quả 5 ngày gần nhất</h2>";
+    html += createRecentTable(recentDates);
+
     const filteredFull = Object.fromEntries(
         Object.entries(fullSetCount)
         .filter(([k,v]) => v > 1)
@@ -250,6 +255,37 @@ function createTable(dataObj) {
     for (const key in dataObj) {
         html += `<tr><td>${key}</td><td>${dataObj[key]}</td></tr>`;
     }
+
+    html += "</table></div>";
+    return html;
+}
+
+function getUniqueDates(history) {
+    const dateMap = new Map();
+    history.forEach(draw => {
+        if (!dateMap.has(draw.date)) {
+            dateMap.set(draw.date, []);
+        }
+        dateMap.get(draw.date).push(draw);
+    });
+    
+    return Array.from(dateMap.keys());
+}
+
+function createRecentTable(dates) {
+    let html = "<div class='table-wrapper'><table>";
+    html += "<tr><th>Ngày</th><th>Kỳ</th><th>Bộ số</th></tr>";
+
+    dates.forEach(date => {
+        const drawsForDate = drawHistory.filter(d => d.date === date);
+        drawsForDate.forEach(draw => {
+            html += `<tr>
+                <td>${draw.date}</td>
+                <td>${draw.drawId}</td>
+                <td>${draw.numbers.join(" ")}</td>
+            </tr>`;
+        });
+    });
 
     html += "</table></div>";
     return html;
