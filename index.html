@@ -119,6 +119,37 @@ tr:nth-child(even) {
     overflow-x: auto;
 }
 
+.random-numbers-container {
+    background: rgba(255,255,255,0.97);
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 15px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+    text-align: center;
+}
+
+.random-numbers-display {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 15px;
+}
+
+.random-number-box {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2em;
+    font-weight: bold;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
 /* @media (max-width: 768px) {
 
     body { padding: 20px; }
@@ -174,6 +205,7 @@ function processData(text) {
         const drawId = parts[1];
         const numbersPart = parts[2];
         const mainPart = numbersPart.split("|")[0];
+        const special = numbersPart.split("|")[1] || "";
 
         let numbers = [];
         for (let i = 0; i < mainPart.length; i += 2) {
@@ -182,7 +214,7 @@ function processData(text) {
 
         numbers.sort();
 
-        drawHistory.push({ date, drawId, numbers });
+        drawHistory.push({ date, drawId, numbers, special: special });
 
         const fullKey = numbers.join("-");
         fullSetCount[fullKey] = (fullSetCount[fullKey] || 0) + 1;
@@ -208,6 +240,14 @@ function processData(text) {
 function displayResults() {
 
     let html = "";
+
+    html += "<div class='random-numbers-container'>";
+    html += "<h3 style='color: #667eea;'>🎲 Số đặc biệt</h3>";
+    html += createRandomNumbersDisplay();
+    html += "</div>";
+
+    html += "<h2 class='result-heading'>💡 Gợi ý bộ số chưa từng xuất hiện</h2>";
+    html += createSuggestTable();
 
     // Display recent results from last 5 days
     const recentDates = getUniqueDates(drawHistory).slice(0, 5);
@@ -282,9 +322,77 @@ function createRecentTable(dates) {
             html += `<tr>
                 <td>${draw.date}</td>
                 <td>${draw.drawId}</td>
-                <td>${draw.numbers.join(" ")}</td>
+                <td>${draw.numbers.join(" ")} | ${draw.special || "-"}</td>
             </tr>`;
         });
+    });
+
+    html += "</table></div>";
+    return html;
+}
+
+function generateRandomSets() {
+    const existingSets = new Set(Object.keys(fullSetCount));
+    const suggestedSets = [];
+    
+    while (suggestedSets.length < 5) {
+        const numbers = [];
+        
+        // Generate 5 random numbers from 1-35
+        while (numbers.length < 5) {
+            const num = Math.floor(Math.random() * 35) + 1;
+            const numStr = String(num).padStart(2, '0');
+            if (!numbers.includes(numStr)) {
+                numbers.push(numStr);
+            }
+        }
+        
+        numbers.sort();
+        const setKey = numbers.join("-");
+        
+        // Only add if this set has never appeared before
+        if (!existingSets.has(setKey)) {
+            suggestedSets.push(setKey);
+        }
+    }
+    
+    return suggestedSets;
+}
+
+function generateRandomNumbers() {
+    const randomNumbers = [];
+    while (randomNumbers.length < 3) {
+        const num = Math.floor(Math.random() * 12) + 1;
+        if (!randomNumbers.includes(num)) {
+            randomNumbers.push(num);
+        }
+    }
+    return randomNumbers;
+}
+
+function createRandomNumbersDisplay() {
+    const numbers = generateRandomNumbers();
+    let html = "<div class='random-numbers-display'>";
+    
+    numbers.forEach(num => {
+        html += `<div class='random-number-box'>${String(num).padStart(2, '0')}</div>`;
+    });
+    
+    html += "</div>";
+    return html;
+}
+
+function createSuggestTable() {
+    const suggestedSets = generateRandomSets();
+    
+    let html = "<div class='table-wrapper'><table>";
+    html += "<tr><th>STT</th><th>Bộ số gợi ý</th></tr>";
+
+    suggestedSets.forEach((set, index) => {
+        html += `<tr>
+            <td>${index + 1}</td>
+            <td>${set}</td>
+        </tr>`;
     });
 
     html += "</table></div>";
