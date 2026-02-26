@@ -241,13 +241,18 @@ function displayResults() {
 
     let html = "";
 
-    html += "<div class='random-numbers-container'>";
+    html += "<div class='random-numbers-container' id='randomSection'>";
     html += "<h3 style='color: #667eea;'>🎲 Số đặc biệt</h3>";
     html += createRandomNumbersDisplay();
     html += "</div>";
 
+    // refresh button
+    html += "<div style='text-align:center; margin-top:10px;'>" +
+            "<button onclick=\"refreshRandomSuggest()\">🔄 Làm mới số</button>" +
+            "</div>";
+
     html += "<h2 class='result-heading'>💡 Gợi ý bộ số chưa từng xuất hiện</h2>";
-    html += createSuggestTable();
+    html += "<div id='suggestSection'>" + createSuggestTable() + "</div>";
 
     // Display recent results from last 5 days
     const recentDates = getUniqueDates(drawHistory).slice(0, 5);
@@ -380,6 +385,19 @@ function createRandomNumbersDisplay() {
     
     html += "</div>";
     return html;
+}
+
+function refreshRandomSuggest() {
+    // update random numbers
+    const randomSection = document.getElementById('randomSection');
+    if (randomSection) {
+        randomSection.innerHTML = "<h3 style='color: #667eea;'>🎲 Số đặc biệt</h3>" + createRandomNumbersDisplay();
+    }
+    // update suggestion table
+    const suggestSection = document.getElementById('suggestSection');
+    if (suggestSection) {
+        suggestSection.innerHTML = createSuggestTable();
+    }
 }
 
 function createSuggestTable() {
