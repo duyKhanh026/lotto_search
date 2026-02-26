@@ -251,7 +251,7 @@ function displayResults() {
             "<button onclick=\"refreshRandomSuggest()\">🔄 Làm mới số</button>" +
             "</div>";
 
-    html += "<h2 class='result-heading'>💡 Gợi ý bộ số chưa từng xuất hiện</h2>";
+    html += "<h2 class='result-heading'>💡 Bộ số chưa từng xuất hiện</h2>";
     html += "<div id='suggestSection'>" + createSuggestTable() + "</div>";
 
     // Display recent results from last 5 days
@@ -340,7 +340,7 @@ function generateRandomSets() {
     const existingSets = new Set(Object.keys(fullSetCount));
     const suggestedSets = [];
     
-    while (suggestedSets.length < 5) {
+    while (suggestedSets.length < 10) {
         const numbers = [];
         
         // Generate 5 random numbers from 1-35
