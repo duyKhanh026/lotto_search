@@ -42,7 +42,7 @@ function processData(text) {
         for (let i = 0; i < numbers.length; i++) {
             for (let j = i + 1; j < numbers.length; j++) {
                 for (let k = j + 1; k < numbers.length; k++) {
-                    const triple = [numbers[i], numbers[j], numbers[k]].join("-");
+                    const triple = [numbers[i], numbers[j], numbers[k]].join(" ");
                     tripleCount[triple] = (tripleCount[triple] || 0) + 1;
                 }
             }
@@ -160,7 +160,7 @@ function generateRandomSets() {
         }
         
         numbers.sort();
-        const setKey = numbers.join("-");
+        const setKey = numbers.join(" ");
         
         // Only add if this set has never appeared before
         if (!existingSets.has(setKey)) {

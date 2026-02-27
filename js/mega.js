@@ -32,7 +32,7 @@ function processMegaData(text) {
             for (let i = 0; i < numbers.length; i++) {
                 for (let j = i + 1; j < numbers.length; j++) {
                     for (let k = j + 1; k < numbers.length; k++) {
-                        const six = [numbers[i], numbers[j], numbers[k]].join("-");
+                        const six = [numbers[i], numbers[j], numbers[k]].join(" ");
                         megaSixCount[six] = (megaSixCount[six] || 0) + 1;
                     }
                 }
@@ -154,7 +154,7 @@ function generateMegaRandomSets() {
         }
         
         numbers.sort();
-        const setKey = numbers.join("-");
+        const setKey = numbers.join(" ");
         
         // Only add if this set has never appeared before
         if (!existingSets.has(setKey)) {
@@ -257,7 +257,7 @@ function checkMegaSet() {
 
     if (matchedDraws.length > 0) {
         let html = `
-        ✅ Tổ hợp <strong>${numbers.join("-")}</strong> xuất hiện 
+        ✅ Tổ hợp <strong>${numbers.join(" ")}</strong> xuất hiện 
         <strong>${matchedDraws.length}</strong> kỳ
         <br><br>
         <div class="table-wrapper">
@@ -281,7 +281,7 @@ function checkMegaSet() {
         showMegaResult(html, true);
     } else {
         showMegaResult(
-            `❌ Tổ hợp ${numbers.join("-")} chưa từng xuất hiện`,
+            `❌ Tổ hợp ${numbers.join(" ")} chưa từng xuất hiện`,
             false
         );
     }
