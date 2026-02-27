@@ -93,12 +93,7 @@ function displayMegaResults() {
 
     // Frequency
     html += "<h2 class='result-heading'>Tần suất từng số</h2>";
-    html += createTable(
-        Object.fromEntries(
-            Object.entries(megaNumberFrequency)
-                .sort((a, b) => b[1] - a[1])
-        )
-    );
+    html += createFrequencyTable(megaNumberFrequency);
 
     document.getElementById("megaResult").innerHTML = html;
 }

@@ -37,6 +37,27 @@ function createTable(dataObj) {
     return html;
 }
 
+/**
+ * Create frequency table sorted by frequency (descending)
+ */
+function createFrequencyTable(frequencyObj) {
+    if (Object.keys(frequencyObj).length === 0)
+        return "<p>Không có dữ liệu</p>";
+
+    let html = "<div class='table-wrapper'><table>";
+    html += "<tr><th>Số</th><th>Tần suất</th></tr>";
+
+    // Sort by frequency (descending) then by number (ascending)
+    Object.entries(frequencyObj)
+        .sort((a, b) => b[1] - a[1] || parseInt(a[0]) - parseInt(b[0]))
+        .forEach(([num, freq]) => {
+            html += `<tr><td>${num}</td><td>${freq}</td></tr>`;
+        });
+
+    html += "</table></div>";
+    return html;
+}
+
 // Initialize when page loads
 window.onload = function() {
     // Load Lotto data

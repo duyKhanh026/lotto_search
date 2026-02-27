@@ -99,12 +99,7 @@ function displayResults() {
 
     // Frequency
     html += "<h2 class='result-heading'>Tần suất từng số</h2>";
-    html += createTable(
-        Object.fromEntries(
-            Object.entries(numberFrequency)
-                .sort((a, b) => b[1] - a[1])
-        )
-    );
+    html += createFrequencyTable(numberFrequency);
 
     document.getElementById("result").innerHTML = html;
 }
