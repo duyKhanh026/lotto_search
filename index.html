@@ -1,494 +1,93 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Phân tích Lotto</title>
-
-<style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
-body { 
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 40px 20px;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-h1 {
-    color: white;
-    text-align: center;
-    margin-bottom: 40px;
-    font-size: 2.3em;
-    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
-}
-
-h2 { 
-    margin-top: 35px; 
-    margin-bottom: 20px;
-    color: white;
-    font-size: 1.3em;
-    background: rgba(255,255,255,0.15);
-    padding: 12px;
-    border-radius: 8px;
-    border-left: 4px solid #ffd700;
-}
-
-.result-heading {
-    color: black !important;
-    background: rgba(255,255,255,0.9) !important;
-}
-
-.input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
-}
-
-input { 
-    padding: 12px 15px;
-    border: none;
-    border-radius: 6px;
-    font-size: 1em;
-    flex: 1;
-    min-width: 250px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
-
-button { 
-    padding: 12px 25px;
-    border: none;
-    border-radius: 6px;
-    background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
-    font-weight: bold;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-button:hover {
-    transform: translateY(-2px);
-}
-
-.result-box { 
-    margin-top: 15px; 
-    padding: 18px;
-    background: rgba(255,255,255,0.97);
-    border-radius: 8px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-    font-size: 0.95em;
-    display: none;
-}
-
-#result {
-    background: rgba(255,255,255,0.97);
-    border-radius: 8px;
-    padding: 25px;
-    margin-top: 30px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-table { 
-    border-collapse: collapse; 
-    margin-top: 15px; 
-    width: 100%;
-    background: white;
-}
-
-th, td { 
-    border: 1px solid #e0e0e0;
-    padding: 10px; 
-    text-align: center;
-    font-size: 0.9em;
-}
-
-th { 
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-tr:nth-child(even) {
-    background: #f5f7ff;
-}
-
-.table-wrapper {
-    overflow-x: auto;
-}
-
-.random-numbers-container {
-    background: rgba(255,255,255,0.97);
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 15px;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.15);
-    text-align: center;
-}
-
-.random-numbers-display {
-    display: flex;
-    gap: 15px;
-    justify-content: center;
-    flex-wrap: wrap;
-    margin-top: 15px;
-}
-
-.random-number-box {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    width: 80px;
-    height: 80px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2em;
-    font-weight: bold;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-/* @media (max-width: 768px) {
-
-    body { padding: 20px; }
-
-    h1 { font-size: 1.6em; }
-
-    table {
-        font-size: 0.8em;
-        min-width: 500px;
-    }
-} */
-</style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>Phân tích Lotto</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
-<div class="container">
-<h1>🎰 Phân tích kết quả Lotto</h1>
+<!-- Navigation Menu -->
+<nav class="navbar">
+    <div class="nav-container">
+        <div class="nav-brand">🎰Tí Nghiện!</div>
+        <ul class="nav-links">
+            <li><a href="#" onclick="showPage('lotto')" class="nav-link active" id="nav-lotto">Lotto 5/35</a></li>
+            <li><a href="#" onclick="showPage('mega')" class="nav-link" id="nav-mega">Mega 6/45</a></li>
+            <li><a href="#" onclick="showPage('about')" class="nav-link" id="nav-about">Thông tin</a></li>
+        </ul>
+    </div>
+</nav>
 
-<h2>🔍 Dò bộ số</h2>
-<div class="input-group">
-    <input type="text" id="checkInput" placeholder="Nhập 3-5 số ví dụ: 12 14 22 23 30">
-    <button onclick="checkSet()">Kiểm tra</button>
+<!-- Lotto Page -->
+<div id="lotto" class="page-content active">
+    <div class="main-container">
+        <h1 class="page-title">🎰 Phân tích kết quả Lotto</h1>
+
+        <h2>🔍 Dò bộ số</h2>
+        <div class="input-group">
+            <input type="text" id="checkInput" placeholder="Nhập 3-5 số ví dụ: 12 14 22 23 30">
+            <button onclick="checkSet()">Kiểm tra</button>
+        </div>
+        <div id="checkResult" class="result-box"></div>
+
+        <div id="result"></div>
+    </div>
 </div>
-<div id="checkResult" class="result-box"></div>
 
-<div id="result"></div>
+<!-- Mega 6/45 Page -->
+<div id="mega" class="page-content">
+    <div class="main-container">
+        <h1 class="page-title">🎯 Phân tích Mega 6/45</h1>
+
+        <h2>🔍 Dò bộ số</h2>
+        <div class="input-group">
+            <input type="text" id="megaCheckInput" placeholder="Nhập 6 số ví dụ: 1 5 10 20 30 45">
+            <button onclick="checkMegaSet()">Kiểm tra</button>
+        </div>
+        <div id="megaCheckResult" class="result-box"></div>
+
+        <div id="megaResult"></div>
+    </div>
 </div>
 
-<script>
-
-let fullSetCount = {};
-let tripleCount = {};
-let numberFrequency = {};
-let drawHistory = [];
-
-window.onload = function() {
-    fetch("lotto.txt")
-    .then(response => response.text())
-    .then(text => processData(text))
-    .catch(err => alert("Không đọc được file! Hãy chạy bằng http server."));
-};
-
-function processData(text) {
-
-    const lines = text.trim().split("\n");
-
-    lines.forEach(line => {
-
-        const parts = line.trim().split(" ");
-        if (parts.length < 3) return;
-
-        const date = parts[0];
-        const drawId = parts[1];
-        const numbersPart = parts[2];
-        const mainPart = numbersPart.split("|")[0];
-        const special = numbersPart.split("|")[1] || "";
-
-        let numbers = [];
-        for (let i = 0; i < mainPart.length; i += 2) {
-            numbers.push(mainPart.substr(i, 2));
-        }
-
-        numbers.sort();
-
-        drawHistory.push({ date, drawId, numbers, special: special });
-
-        const fullKey = numbers.join("-");
-        fullSetCount[fullKey] = (fullSetCount[fullKey] || 0) + 1;
-
-        numbers.forEach(num => {
-            numberFrequency[num] = (numberFrequency[num] || 0) + 1;
-        });
-
-        for (let i = 0; i < numbers.length; i++) {
-            for (let j = i + 1; j < numbers.length; j++) {
-                for (let k = j + 1; k < numbers.length; k++) {
-                    const triple = [numbers[i], numbers[j], numbers[k]].join("-");
-                    tripleCount[triple] = (tripleCount[triple] || 0) + 1;
-                }
-            }
-        }
-
-    });
-
-    displayResults();
-}
-
-function displayResults() {
-
-    let html = "";
-
-    html += "<div class='random-numbers-container' id='randomSection'>";
-    html += "<h3 style='color: #667eea;'>🎲 Số đặc biệt</h3>";
-    html += createRandomNumbersDisplay();
-    html += "</div>";
-
-    // refresh button
-    html += "<div style='text-align:center; margin-top:10px;'>" +
-            "<button onclick=\"refreshRandomSuggest()\">🔄 Làm mới số</button>" +
-            "</div>";
-
-    html += "<h2 class='result-heading'>💡 Bộ số chưa từng xuất hiện</h2>";
-    html += "<div id='suggestSection'>" + createSuggestTable() + "</div>";
-
-    // Display recent results from last 5 days
-    const recentDates = getUniqueDates(drawHistory).slice(0, 5);
-    html += "<h2 class='result-heading'>📅 Kết quả 5 ngày gần nhất</h2>";
-    html += createRecentTable(recentDates);
-
-    const filteredFull = Object.fromEntries(
-        Object.entries(fullSetCount)
-        .filter(([k,v]) => v > 1)
-        .sort((a,b) => b[1]-a[1])
-    );
-
-    html += "<h2 class='result-heading'>Bộ 5 số xuất hiện > 1 lần</h2>";
-    html += createTable(filteredFull);
-
-    const filteredTriple = Object.fromEntries(
-        Object.entries(tripleCount)
-        .filter(([k,v]) => v > 1)
-        .sort((a,b) => b[1]-a[1])
-        .slice(0,50)
-    );
-
-    html += "<h2 class='result-heading'>Top bộ 3 xuất hiện > 1 lần</h2>";
-    html += createTable(filteredTriple);
-
-    html += "<h2 class='result-heading'>Tần suất từng số</h2>";
-    html += createTable(
-        Object.fromEntries(
-            Object.entries(numberFrequency)
-            .sort((a,b) => b[1]-a[1])
-        )
-    );
-
-    document.getElementById("result").innerHTML = html;
-}
-
-function createTable(dataObj) {
-
-    if (Object.keys(dataObj).length === 0)
-        return "<p>Không có dữ liệu</p>";
-
-    let html = "<div class='table-wrapper'><table>";
-    html += "<tr><th>Bộ số</th><th>Số lần</th></tr>";
-
-    for (const key in dataObj) {
-        html += `<tr><td>${key}</td><td>${dataObj[key]}</td></tr>`;
-    }
-
-    html += "</table></div>";
-    return html;
-}
-
-function getUniqueDates(history) {
-    const dateMap = new Map();
-    history.forEach(draw => {
-        if (!dateMap.has(draw.date)) {
-            dateMap.set(draw.date, []);
-        }
-        dateMap.get(draw.date).push(draw);
-    });
-    
-    return Array.from(dateMap.keys());
-}
-
-function createRecentTable(dates) {
-    let html = "<div class='table-wrapper'><table>";
-    html += "<tr><th>Ngày</th><th>Kỳ</th><th>Bộ số</th></tr>";
-
-    dates.forEach(date => {
-        const drawsForDate = drawHistory.filter(d => d.date === date);
-        drawsForDate.forEach(draw => {
-            html += `<tr>
-                <td>${draw.date}</td>
-                <td>${draw.drawId}</td>
-                <td>${draw.numbers.join(" ")} | ${draw.special || "-"}</td>
-            </tr>`;
-        });
-    });
-
-    html += "</table></div>";
-    return html;
-}
-
-function generateRandomSets() {
-    const existingSets = new Set(Object.keys(fullSetCount));
-    const suggestedSets = [];
-    
-    while (suggestedSets.length < 10) {
-        const numbers = [];
+<!-- About Page -->
+<div id="about" class="page-content">
+    <div class="main-container">
+        <h1 class="page-title">ℹ️ Thông tin</h1>
         
-        // Generate 5 random numbers from 1-35
-        while (numbers.length < 5) {
-            const num = Math.floor(Math.random() * 35) + 1;
-            const numStr = String(num).padStart(2, '0');
-            if (!numbers.includes(numStr)) {
-                numbers.push(numStr);
-            }
-        }
-        
-        numbers.sort();
-        const setKey = numbers.join("-");
-        
-        // Only add if this set has never appeared before
-        if (!existingSets.has(setKey)) {
-            suggestedSets.push(setKey);
-        }
-    }
-    
-    return suggestedSets;
-}
+        <div style="background: rgba(255,255,255,0.97); border-radius: 8px; padding: 30px; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+            <h2 style="color: #667eea; margin-top: 0;">Về ứng dụng Phân tích Lotto</h2>
+            
+            <p style="margin: 15px 0; line-height: 1.6;">
+                <strong>Phân tích Lotto</strong> là một công cụ hữu ích giúp bạn:
+            </p>
+            
+            <ul style="margin: 15px 0 15px 30px; line-height: 1.8;">
+                <li>📊 Phân tích tần suất xuất hiện của các bộ số lotto</li>
+                <li>🔍 Tìm kiếm những bộ số chưa từng xuất hiện</li>
+                <li>📈 Thống kê tần suất từng con số riêng lẻ</li>
+                <li>🎲 Gợi ý ngẫu nhiên những bộ số tiềm năng</li>
+                <li>📅 Xem kết quả các ngày gần nhất</li>
+                <li>✅ Kiểm tra xem một bộ số đã từng xuất hiện hay chưa</li>
+            </ul>
+            
+            <h3 style="color: #667eea; margin-top: 30px;">Cách sử dụng:</h3>
+            <p style="margin: 15px 0; line-height: 1.6;">
+                1. Chọn tab <strong>Phân tích Lotto</strong> hoặc <strong>Mega 6/45</strong> để xem các phân tích chi tiết<br>
+                2. Sử dụng chức năng "Dò bộ số" để kiểm tra một tổ hợp cụ thể<br>
+                3. Nhấn "Làm mới số" để nhận các gợi ý mới<br>
+                4. Xem các bảng thống kê để hiểu rõ hơn về dữ liệu
+            </p>
+            
+            <h3 style="color: #667eea; margin-top: 30px;">⚠️ Lưu ý:</h3>
+            <p style="margin: 15px 0; line-height: 1.6;">
+                Ứng dụng này chỉ dùng cho mục đích thống kê và giải trí. Không đảm bảo độ chính xác hoặc khả năng dự đoán kết quả lotto.
+            </p>
+        </div>
+    </div>
+</div>
 
-function generateRandomNumbers() {
-    const randomNumbers = [];
-    while (randomNumbers.length < 3) {
-        const num = Math.floor(Math.random() * 12) + 1;
-        if (!randomNumbers.includes(num)) {
-            randomNumbers.push(num);
-        }
-    }
-    return randomNumbers;
-}
-
-function createRandomNumbersDisplay() {
-    const numbers = generateRandomNumbers();
-    let html = "<div class='random-numbers-display'>";
-    
-    numbers.forEach(num => {
-        html += `<div class='random-number-box'>${String(num).padStart(2, '0')}</div>`;
-    });
-    
-    html += "</div>";
-    return html;
-}
-
-function refreshRandomSuggest() {
-    // update random numbers
-    const randomSection = document.getElementById('randomSection');
-    if (randomSection) {
-        randomSection.innerHTML = "<h3 style='color: #667eea;'>🎲 Số đặc biệt</h3>" + createRandomNumbersDisplay();
-    }
-    // update suggestion table
-    const suggestSection = document.getElementById('suggestSection');
-    if (suggestSection) {
-        suggestSection.innerHTML = createSuggestTable();
-    }
-}
-
-function createSuggestTable() {
-    const suggestedSets = generateRandomSets();
-    
-    let html = "<div class='table-wrapper'><table>";
-    html += "<tr><th>STT</th><th>Bộ số gợi ý</th></tr>";
-
-    suggestedSets.forEach((set, index) => {
-        html += `<tr>
-            <td>${index + 1}</td>
-            <td>${set}</td>
-        </tr>`;
-    });
-
-    html += "</table></div>";
-    return html;
-}
-
-function checkSet() {
-
-    const input = document.getElementById("checkInput").value.trim();
-    if (!input) return;
-
-    let numbers = input.split(/\s+/);
-
-    if (numbers.length < 3 || numbers.length > 5) {
-        showResult("⚠️ Nhập từ 3 đến 5 số!", false);
-        return;
-    }
-
-    numbers = numbers.map(n => n.padStart(2,'0')).sort();
-
-    let matchedDraws = [];
-
-    drawHistory.forEach(draw => {
-        const containsAll = numbers.every(num =>
-            draw.numbers.includes(num)
-        );
-        if (containsAll) matchedDraws.push(draw);
-    });
-
-    if (matchedDraws.length > 0) {
-
-        let html = `
-        ✅ Tổ hợp <strong>${numbers.join("-")}</strong> xuất hiện 
-        <strong>${matchedDraws.length}</strong> kỳ
-        <br><br>
-        <div class="table-wrapper">
-        <table>
-        <tr>
-            <th>Ngày</th>
-            <th>Kỳ</th>
-            <th>Bộ số</th>
-        </tr>`;
-
-        matchedDraws.forEach(draw => {
-            html += `
-            <tr>
-                <td>${draw.date}</td>
-                <td>${draw.drawId}</td>
-                <td>${draw.numbers.join(" ")}</td>
-            </tr>`;
-        });
-
-        html += "</table></div>";
-
-        showResult(html, true);
-
-    } else {
-        showResult(
-            `❌ Tổ hợp ${numbers.join("-")} chưa từng xuất hiện`,
-            false
-        );
-    }
-}
-
-function showResult(content, success) {
-
-    const box = document.getElementById("checkResult");
-    box.style.display = "block";
-    box.innerHTML = content;
-
-    if (success) {
-        box.style.borderLeft = "6px solid #28a745";
-    } else {
-        box.style.borderLeft = "6px solid #dc3545";
-    }
-}
-
-</script>
-
+<script src="js/app.js"></script>
 </body>
 </html>
