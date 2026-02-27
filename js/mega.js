@@ -3,6 +3,14 @@ let megaFullSetCount = {};
 let megaSixCount = {};
 let megaNumberFrequency = {};
 let megaDrawHistory = [];
+// Filter state for Mega suggestions
+let megaFilter = {
+    sumMin: null,
+    sumMax: null,
+    evenCount: null,
+    required: [],
+    forbidden: []
+};
 
 /**
  * Process Mega 6/45 data from JSONL file
@@ -62,9 +70,41 @@ function displayMegaResults() {
             "<button onclick=\"refreshMegaRandomSuggest()\">🔄 Làm mới số</button>" +
             "</div>";
 
-    // Suggested sets section
-    html += "<h2 class='result-heading'>💡 Bộ 6 số chưa từng xuất hiện (xếp hạng theo điểm)</h2>";
-    html += "<div id='megaSuggestSection'>" + createMegaSuggestTable() + "</div>";
+        // Suggested sets section with filter button
+        html += "<h2 class='result-heading'>💡 Bộ 6 số chưa từng xuất hiện (xếp hạng theo điểm) <button style=\"margin-left:12px; padding:6px 10px; font-size:0.9em;\" onclick=\"openMegaFilterModal()\">🔎 Filter</button></h2>";
+        html += "<div id='megaSuggestSection'>" + createMegaSuggestTable() + "</div>";
+
+        // Modal markup (hidden by default)
+        html += `
+        <div id="megaFilterModal" class="modal-overlay" style="display:none;">
+            <div class="modal">
+                <h3>Filter Bộ 6 số</h3>
+                <div class="input-group" style="flex-direction:column; gap:8px;">
+                    <div>
+                        <label>Tổng (>=)</label>
+                        <input type="number" id="megaSumMin" placeholder="Tổng tối thiểu">
+                        <label style="margin-left:8px;">Tổng (<=)</label>
+                        <input type="number" id="megaSumMax" placeholder="Tổng tối đa">
+                    </div>
+                    <div>
+                        <label>Số chẵn (bằng)</label>
+                        <input type="number" id="megaEvenCount" placeholder="Số lượng số chẵn">
+                    </div>
+                    <div>
+                        <label>Số bắt buộc (cách nhau bởi dấu cách)</label>
+                        <input type="text" id="megaRequired" placeholder="ví dụ: 03 15 28">
+                    </div>
+                    <div>
+                        <label>Số cấm (cách nhau bởi dấu cách)</label>
+                        <input type="text" id="megaForbidden" placeholder="ví dụ: 04 07">
+                    </div>
+                </div>
+                <div style="text-align:right; margin-top:12px;">
+                    <button onclick="closeMegaFilterModal()" style="margin-right:8px;">Hủy</button>
+                    <button onclick="applyMegaFilter()">Áp dụng</button>
+                </div>
+            </div>
+        </div>`;
 
     // Recent results
     const recentDates = getMegaUniqueDates(megaDrawHistory).slice(0, 10);
@@ -166,6 +206,103 @@ function generateMegaRandomSets() {
 }
 
 /**
+ * Generate up to `count` unseen Mega sets that also pass current filter.
+ * Tries up to `maxAttempts` to find candidates; returns fewer if impossible.
+ */
+function generateFilteredMegaRandomSets(count = 10, maxAttempts = 5000) {
+    const existingSets = new Set(Object.keys(megaFullSetCount));
+    const suggestedSets = [];
+    const seen = new Set();
+
+    // Phases of relaxation. We always try to honor `required` first;
+    // then progressively relax `forbidden`, `evenCount`, `sum`.
+    const phases = [
+        { applyForbidden: true, applyEven: true, applySum: true, applyRequired: true },
+        { applyForbidden: false, applyEven: true, applySum: true, applyRequired: true },
+        { applyForbidden: false, applyEven: false, applySum: true, applyRequired: true },
+        { applyForbidden: false, applyEven: false, applySum: false, applyRequired: true },
+        // last resort: allow ignoring required (if user provided impossible required list)
+        { applyForbidden: false, applyEven: false, applySum: false, applyRequired: false }
+    ];
+
+    for (let p = 0; p < phases.length && suggestedSets.length < count; p++) {
+        let attempts = 0;
+        const opts = phases[p];
+
+        while (suggestedSets.length < count && attempts < maxAttempts) {
+            attempts++;
+            const numbers = [];
+            while (numbers.length < 6) {
+                const num = Math.floor(Math.random() * 45) + 1;
+                const numStr = String(num).padStart(2, '0');
+                if (!numbers.includes(numStr)) numbers.push(numStr);
+            }
+            numbers.sort();
+            const setKey = numbers.join(' ');
+
+            if (existingSets.has(setKey)) continue;
+            if (seen.has(setKey)) continue;
+
+            if (!passesWithOptions(setKey, opts)) continue;
+
+            seen.add(setKey);
+            suggestedSets.push(setKey);
+        }
+    }
+
+    return suggestedSets;
+}
+
+/**
+ * Check set against `megaFilter` but allow selectively ignoring some constraints via `opts`.
+ */
+function passesWithOptions(setStr, opts) {
+    const useForbidden = opts.applyForbidden;
+    const useEven = opts.applyEven;
+    const useSum = opts.applySum;
+    const useRequired = opts.applyRequired;
+
+    // If no filter at all and nothing required, accept
+    const hasAny = (megaFilter.sumMin !== null) || (megaFilter.sumMax !== null) || (megaFilter.evenCount !== null) || (megaFilter.required && megaFilter.required.length > 0) || (megaFilter.forbidden && megaFilter.forbidden.length > 0);
+    if (!hasAny && useRequired) return true;
+
+    const nums = setStr.split(' ').map(s => parseInt(s, 10));
+    const sum = nums.reduce((a, b) => a + b, 0);
+    const evenCnt = nums.filter(n => n % 2 === 0).length;
+
+    if (useSum) {
+        if (megaFilter.sumMin !== null && sum < megaFilter.sumMin) return false;
+        if (megaFilter.sumMax !== null && sum > megaFilter.sumMax) return false;
+    }
+
+    if (useEven) {
+        if (megaFilter.evenCount !== null && megaFilter.evenCount !== '' && evenCnt !== Number(megaFilter.evenCount)) return false;
+    }
+
+    if (useRequired) {
+        if (megaFilter.required && megaFilter.required.length > 0) {
+            for (let r of megaFilter.required) {
+                if (!r) continue;
+                const rStr = String(r).padStart(2, '0');
+                if (!setStr.split(' ').includes(rStr)) return false;
+            }
+        }
+    }
+
+    if (useForbidden) {
+        if (megaFilter.forbidden && megaFilter.forbidden.length > 0) {
+            for (let f of megaFilter.forbidden) {
+                if (!f) continue;
+                const fStr = String(f).padStart(2, '0');
+                if (setStr.split(' ').includes(fStr)) return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+/**
  * Generate 6 random Mega numbers
  */
 function generateMegaRandomNumbers() {
@@ -224,8 +361,8 @@ function getMegaSetScore(setStr) {
 }
 
 function createMegaSuggestTable() {
-    const suggestedSets = generateMegaRandomSets();
-    
+    const suggestedSets = generateFilteredMegaRandomSets(10);
+
     // compute score for each set and sort by descending score
     const scoredSets = suggestedSets.map(set => ({
         set,
@@ -247,6 +384,80 @@ function createMegaSuggestTable() {
 
     html += "</table></div>";
     return html;
+}
+
+/**
+ * Check if a set string passes current megaFilter
+ */
+function setPassesMegaFilter(setStr) {
+    if (!megaFilter) return true;
+    // If all filter fields are empty, allow
+    const hasAny = (megaFilter.sumMin !== null) || (megaFilter.sumMax !== null) || (megaFilter.evenCount !== null) || (megaFilter.required && megaFilter.required.length > 0) || (megaFilter.forbidden && megaFilter.forbidden.length > 0);
+    if (!hasAny) return true;
+
+    const nums = setStr.split(" ").map(s => parseInt(s, 10));
+    const sum = nums.reduce((a, b) => a + b, 0);
+    const evenCnt = nums.filter(n => n % 2 === 0).length;
+
+    if (megaFilter.sumMin !== null && sum < megaFilter.sumMin) return false;
+    if (megaFilter.sumMax !== null && sum > megaFilter.sumMax) return false;
+    if (megaFilter.evenCount !== null && megaFilter.evenCount !== '' && evenCnt !== Number(megaFilter.evenCount)) return false;
+
+    if (megaFilter.required && megaFilter.required.length > 0) {
+        for (let r of megaFilter.required) {
+            if (!r) continue;
+            const rStr = String(r).padStart(2, '0');
+            if (!setStr.split(' ').includes(rStr)) return false;
+        }
+    }
+
+    if (megaFilter.forbidden && megaFilter.forbidden.length > 0) {
+        for (let f of megaFilter.forbidden) {
+            if (!f) continue;
+            const fStr = String(f).padStart(2, '0');
+            if (setStr.split(' ').includes(fStr)) return false;
+        }
+    }
+
+    return true;
+}
+
+/* Modal handlers */
+function openMegaFilterModal() {
+    const modal = document.getElementById('megaFilterModal');
+    if (!modal) return;
+    // populate inputs
+    document.getElementById('megaSumMin').value = megaFilter.sumMin !== null ? megaFilter.sumMin : '';
+    document.getElementById('megaSumMax').value = megaFilter.sumMax !== null ? megaFilter.sumMax : '';
+    document.getElementById('megaEvenCount').value = megaFilter.evenCount !== null ? megaFilter.evenCount : '';
+    document.getElementById('megaRequired').value = (megaFilter.required || []).join(' ');
+    document.getElementById('megaForbidden').value = (megaFilter.forbidden || []).join(' ');
+    modal.style.display = 'block';
+}
+
+function closeMegaFilterModal() {
+    const modal = document.getElementById('megaFilterModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+}
+
+function applyMegaFilter() {
+    // read values
+    const sumMinVal = document.getElementById('megaSumMin').value;
+    const sumMaxVal = document.getElementById('megaSumMax').value;
+    const evenCountVal = document.getElementById('megaEvenCount').value;
+    const requiredVal = document.getElementById('megaRequired').value.trim();
+    const forbiddenVal = document.getElementById('megaForbidden').value.trim();
+
+    megaFilter.sumMin = sumMinVal !== '' ? Number(sumMinVal) : null;
+    megaFilter.sumMax = sumMaxVal !== '' ? Number(sumMaxVal) : null;
+    megaFilter.evenCount = evenCountVal !== '' ? Number(evenCountVal) : null;
+    megaFilter.required = requiredVal !== '' ? requiredVal.split(/\s+/).map(s => s.padStart ? s.padStart(2, '0') : s) : [];
+    megaFilter.forbidden = forbiddenVal !== '' ? forbiddenVal.split(/\s+/).map(s => s.padStart ? s.padStart(2, '0') : s) : [];
+
+    closeMegaFilterModal();
+    const suggestSection = document.getElementById('megaSuggestSection');
+    if (suggestSection) suggestSection.innerHTML = createMegaSuggestTable();
 }
 
 /**
