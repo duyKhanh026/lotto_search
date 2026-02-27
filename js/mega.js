@@ -63,7 +63,7 @@ function displayMegaResults() {
             "</div>";
 
     // Suggested sets section
-    html += "<h2 class='result-heading'>💡 Bộ 6 số chưa từng xuất hiện</h2>";
+    html += "<h2 class='result-heading'>💡 Bộ 6 số chưa từng xuất hiện (xếp hạng theo điểm)</h2>";
     html += "<div id='megaSuggestSection'>" + createMegaSuggestTable() + "</div>";
 
     // Recent results
@@ -213,16 +213,35 @@ function refreshMegaRandomSuggest() {
 /**
  * Create Mega suggestion table
  */
+// calculate score (sum of frequencies) for a given set string
+function getMegaSetScore(setStr) {
+    const nums = setStr.split(" ");
+    let score = 0;
+    nums.forEach(num => {
+        score += (megaNumberFrequency[num] || 0);
+    });
+    return score;
+}
+
 function createMegaSuggestTable() {
     const suggestedSets = generateMegaRandomSets();
     
-    let html = "<div class='table-wrapper'><table>";
-    html += "<tr><th>STT</th><th>Chưa xuất hiện</th></tr>";
+    // compute score for each set and sort by descending score
+    const scoredSets = suggestedSets.map(set => ({
+        set,
+        score: getMegaSetScore(set)
+    }));
 
-    suggestedSets.forEach((set, index) => {
+    scoredSets.sort((a, b) => b.score - a.score);
+
+    let html = "<div class='table-wrapper'><table>";
+    html += "<tr><th>STT</th><th>Chưa xuất hiện</th><th>Điểm</th></tr>";
+
+    scoredSets.forEach((item, index) => {
         html += `<tr>
             <td>${index + 1}</td>
-            <td>${set}</td>
+            <td>${item.set}</td>
+            <td>${item.score}</td>
         </tr>`;
     });
 
