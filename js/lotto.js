@@ -4,6 +4,15 @@ let tripleCount = {};
 let numberFrequency = {};
 let drawHistory = [];
 
+// Filter state for Lotto suggestions
+let lottoFilter = {
+    sumMin: null,
+    sumMax: null,
+    evenCount: null,
+    required: [],
+    forbidden: []
+};
+
 /**
  * Process lotto data from file
  */
@@ -69,9 +78,41 @@ function displayResults() {
             "<button onclick=\"refreshRandomSuggest()\">🔄 Làm mới số</button>" +
             "</div>";
 
-    // Suggested numbers section
-    html += "<h2 class='result-heading'>💡 Bộ số chưa từng xuất hiện</h2>";
+    // Suggested numbers section with filter button
+    html += "<h2 class='result-heading'>💡 Bộ số chưa từng xuất hiện <button style=\"margin-left:12px; padding:6px 10px; font-size:0.9em;\" onclick=\"openLottoFilterModal()\">🔎 Filter</button></h2>";
     html += "<div id='suggestSection'>" + createSuggestTable() + "</div>";
+
+    // Modal markup for filters (hidden by default)
+    html += `
+        <div id="lottoFilterModal" class="modal-overlay" style="display:none;">
+            <div class="modal">
+                <h3>Filter Bộ số</h3>
+                <div class="input-group" style="flex-direction:column; gap:8px;">
+                    <div>
+                        <label>Tổng (>=)</label>
+                        <input type="number" id="sumMin" placeholder="Tổng tối thiểu">
+                        <label style="margin-left:8px;">Tổng (<=)</label>
+                        <input type="number" id="sumMax" placeholder="Tổng tối đa">
+                    </div>
+                    <div>
+                        <label>Số chẵn (bằng)</label>
+                        <input type="number" id="evenCount" placeholder="Số lượng số chẵn">
+                    </div>
+                    <div>
+                        <label>Số bắt buộc (cách nhau bởi dấu cách)</label>
+                        <input type="text" id="required" placeholder="ví dụ: 03 15 28">
+                    </div>
+                    <div>
+                        <label>Số cấm (cách nhau bởi dấu cách)</label>
+                        <input type="text" id="forbidden" placeholder="ví dụ: 04 07">
+                    </div>
+                </div>
+                <div style="text-align:right; margin-top:12px;">
+                    <button onclick="closeLottoFilterModal()" style="margin-right:8px;">Hủy</button>
+                    <button onclick="applyLottoFilter()">Áp dụng</button>
+                </div>
+            </div>
+        </div>`;
 
     // Recent results
     const recentDates = getUniqueDates(drawHistory).slice(0, 5);
@@ -172,6 +213,139 @@ function generateRandomSets() {
 }
 
 /**
+ * Generate up to `count` unseen Lotto sets that also satisfy current filter.
+ * Uses phased relaxation to return something even if constraints are tight.
+ */
+function generateFilteredRandomSets(count = 10, maxAttempts = 5000) {
+    const existingSets = new Set(Object.keys(fullSetCount));
+    const suggestedSets = [];
+    const seen = new Set();
+
+    const phases = [
+        { applyForbidden: true, applyEven: true, applySum: true, applyRequired: true },
+        { applyForbidden: false, applyEven: true, applySum: true, applyRequired: true },
+        { applyForbidden: false, applyEven: false, applySum: true, applyRequired: true },
+        { applyForbidden: false, applyEven: false, applySum: false, applyRequired: true },
+        { applyForbidden: false, applyEven: false, applySum: false, applyRequired: false }
+    ];
+
+    for (let p = 0; p < phases.length && suggestedSets.length < count; p++) {
+        let attempts = 0;
+        const opts = phases[p];
+
+        while (suggestedSets.length < count && attempts < maxAttempts) {
+            attempts++;
+            const numbers = [];
+            while (numbers.length < 5) {
+                const num = Math.floor(Math.random() * 35) + 1;
+                const numStr = String(num).padStart(2, '0');
+                if (!numbers.includes(numStr)) numbers.push(numStr);
+            }
+            numbers.sort();
+            const setKey = numbers.join(' ');
+
+            if (existingSets.has(setKey)) continue;
+            if (seen.has(setKey)) continue;
+            if (!passesWithOptionsLotto(setKey, opts)) continue;
+
+            seen.add(setKey);
+            suggestedSets.push(setKey);
+        }
+    }
+
+    return suggestedSets;
+}
+
+/**
+ * Determine whether a candidate set passes the current lottoFilter,
+ * allowing selective disabling of each constraint according to `opts`.
+ */
+function passesWithOptionsLotto(setStr, opts) {
+    const useForbidden = opts.applyForbidden;
+    const useEven = opts.applyEven;
+    const useSum = opts.applySum;
+    const useRequired = opts.applyRequired;
+
+    const hasAny = (lottoFilter.sumMin !== null) || (lottoFilter.sumMax !== null) ||
+        (lottoFilter.evenCount !== null) || (lottoFilter.required && lottoFilter.required.length > 0) ||
+        (lottoFilter.forbidden && lottoFilter.forbidden.length > 0);
+    if (!hasAny && useRequired) return true;
+
+    const nums = setStr.split(' ').map(s => parseInt(s, 10));
+    const sum = nums.reduce((a, b) => a + b, 0);
+    const evenCnt = nums.filter(n => n % 2 === 0).length;
+
+    if (useSum) {
+        if (lottoFilter.sumMin !== null && sum < lottoFilter.sumMin) return false;
+        if (lottoFilter.sumMax !== null && sum > lottoFilter.sumMax) return false;
+    }
+
+    if (useEven) {
+        if (lottoFilter.evenCount !== null && lottoFilter.evenCount !== '' && evenCnt !== Number(lottoFilter.evenCount)) return false;
+    }
+
+    if (useRequired) {
+        if (lottoFilter.required && lottoFilter.required.length > 0) {
+            for (let r of lottoFilter.required) {
+                if (!r) continue;
+                const rStr = String(r).padStart(2, '0');
+                if (!setStr.split(' ').includes(rStr)) return false;
+            }
+        }
+    }
+
+    if (useForbidden) {
+        if (lottoFilter.forbidden && lottoFilter.forbidden.length > 0) {
+            for (let f of lottoFilter.forbidden) {
+                if (!f) continue;
+                const fStr = String(f).padStart(2, '0');
+                if (setStr.split(' ').includes(fStr)) return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+/**
+ * Handlers for filter modal
+ */
+function openLottoFilterModal() {
+    const modal = document.getElementById('lottoFilterModal');
+    if (!modal) return;
+    document.getElementById('sumMin').value = lottoFilter.sumMin !== null ? lottoFilter.sumMin : '';
+    document.getElementById('sumMax').value = lottoFilter.sumMax !== null ? lottoFilter.sumMax : '';
+    document.getElementById('evenCount').value = lottoFilter.evenCount !== null ? lottoFilter.evenCount : '';
+    document.getElementById('required').value = (lottoFilter.required || []).join(' ');
+    document.getElementById('forbidden').value = (lottoFilter.forbidden || []).join(' ');
+    modal.style.display = 'block';
+}
+
+function closeLottoFilterModal() {
+    const modal = document.getElementById('lottoFilterModal');
+    if (!modal) return;
+    modal.style.display = 'none';
+}
+
+function applyLottoFilter() {
+    const sumMinVal = document.getElementById('sumMin').value;
+    const sumMaxVal = document.getElementById('sumMax').value;
+    const evenCountVal = document.getElementById('evenCount').value;
+    const requiredVal = document.getElementById('required').value.trim();
+    const forbiddenVal = document.getElementById('forbidden').value.trim();
+
+    lottoFilter.sumMin = sumMinVal !== '' ? Number(sumMinVal) : null;
+    lottoFilter.sumMax = sumMaxVal !== '' ? Number(sumMaxVal) : null;
+    lottoFilter.evenCount = evenCountVal !== '' ? Number(evenCountVal) : null;
+    lottoFilter.required = requiredVal !== '' ? requiredVal.split(/\s+/).map(s => s.padStart ? s.padStart(2, '0') : s) : [];
+    lottoFilter.forbidden = forbiddenVal !== '' ? forbiddenVal.split(/\s+/).map(s => s.padStart ? s.padStart(2, '0') : s) : [];
+
+    closeLottoFilterModal();
+    const suggestSection = document.getElementById('suggestSection');
+    if (suggestSection) suggestSection.innerHTML = createSuggestTable();
+}
+
+/**
  * Generate 3 random special numbers
  */
 function generateRandomNumbers() {
@@ -220,7 +394,7 @@ function refreshRandomSuggest() {
  * Create suggestion table
  */
 function createSuggestTable() {
-    const suggestedSets = generateRandomSets();
+    const suggestedSets = generateFilteredRandomSets(10);
     
     let html = "<div class='table-wrapper'><table>";
     html += "<tr><th>STT</th><th>Bộ số gợi ý</th></tr>";
